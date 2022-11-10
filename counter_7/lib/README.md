@@ -3,7 +3,7 @@ Vladi Jingga Mentari - 2106635631 - PBP A
 ## Jawaban Soal
 
 
-### _Stateless widget _dan _stateful widget_ dan perbedaan dari keduanya?
+### _Stateless widget_ dan _stateful widget_ dan perbedaan dari keduanya?
 _Stateless widget_ adalah _widget_ yang tidak membutuhkan _mutable state_ sehingga tidak dapat diubah 
 _state_-nya secara dinamis, dan perlu di-edit dari kodenya. Contohnya di `counter_7` adalah _title_ dari app yang akan
 tidak dapat diubah kecuali dari kodenya langsung. 
