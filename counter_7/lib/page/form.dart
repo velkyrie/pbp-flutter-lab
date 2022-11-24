@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:counter_7/main.dart';
-import 'package:counter_7/data.dart';
+import 'package:counter_7/page/data.dart';
+import 'package:counter_7/page/mywatchlist.dart';
 import 'package:intl/intl.dart';
 
 class MyFormPage extends StatefulWidget {
@@ -67,6 +68,15 @@ class _MyFormPageState extends State<MyFormPage> {
                 );
               },
             ),
+            ListTile(
+                          title: const Text('My Watch List'),
+                          onTap: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => const MyWatchlistPage()),
+                            );
+                          },
+                        ),
           ],
         ),
       ),
