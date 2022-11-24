@@ -141,7 +141,7 @@ class _MyDetailsPageState extends State<MyDetailsPage> {
                         ),
                         children: <TextSpan> [
                           const TextSpan(text: 'Status: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                          TextSpan(text:'${widget.watched}')
+                          widget.watched ? TextSpan(text:'watched') : TextSpan(text:'not watched'),
                         ]
                     )
                 ),
@@ -172,8 +172,8 @@ class _MyDetailsPageState extends State<MyDetailsPage> {
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton: Padding(
           padding: const EdgeInsets.fromLTRB(6.0, 6.0, 6.0, 0.0),
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
+          child: TextButton(
+            style: TextButton.styleFrom(
               backgroundColor: Colors.blue,
               minimumSize: const Size.fromHeight(40),
             ),
