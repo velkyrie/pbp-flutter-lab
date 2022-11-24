@@ -3,7 +3,334 @@ Vladi Jingga Mentari
 2106635631
 PBP A
 
+## Tugas 9
+
+### Apakah bisa kita melakukan pengambilan data JSON tanpa membuat model terlebih dahulu? Jika iya, apakah hal tersebut lebih baik daripada membuat model sebelum melakukan pengambilan data JSON?
+
+Bisa, salah satu caranya adalah dengan menggunakan `jsonDecode()` di mana JSON data dengan menggunakan JSON string sebagai argumen, di-_parse_ dan akan dikembalikan sebagi objek JSON. Akan tetapi, `jsonDecode()` mengembalikan Map<String, dynamic>, artinya tipe dari nilai tidak diketahui hingga runtime. Hal ini menyebabkan hilangnya sebagian besar fitur seperti _type safety_, _autocompletion_, dan juga _compile time exceptions_ sehingga lebih rawan akan error. Sedangkan dengan model, data dapat menjadi lebih rapih serta terstruktur sehingga error/bugs dapat lebih mudah dideteksi dari awal. 
+
+### Sebutkan widget apa saja yang kamu pakai di proyek kali ini dan jelaskan fungsinya.
+1. Scaffold: sebagai _layout_ utama app
+2. Appbar: menampilkan judul app
+3. FloatingActionButton: menampilkan _floating button_ 
+4. Text: menampilkan text
+5. Container: sebagai "pembungkus" _widget_
+6. Center: _layout manager_ agar semua _widget_ _align_ ke tengah
+7. Column: _layout manager_ untuk kolom (secara vertikal)
+8. Row: _layout manager_ untuk baris (secara horizontal)
+9. Padding: menambahkan _space_ kosong di sekitar _widget_
+10. Drawer: Panel untuk menunjukkan link navigasi yang ada di dalam aplikasi, dengan animasi _slide in_ secara horizontal dari pinggiran Scaffold
+11. ListTile: Row dengan _fixed-height_ yang biasanya berisi text atau _leading_/_trailing_ _icon_
+15. Align: mengatur _alignment_ _child_-nya di dalam dirinya sendiri dan dapat mengatur ukuran berdasarkan ukuran dari _child_-nya
+16. Card: sebagai card untuk menampung informasi
+18. EdgeInsets: set dari _offset_ di masing-masing dari empat arah kardinal, dapat diimplementasikan dalam Padding
+20. Navigator: _widget_ yang mengatur beberapa _child widgets_ dengan _stack discipline_
+21. TextButton: Button _flat_ sederhana tanpa border outline
+22. RichText: Menampilkan teks yang menggunakan beberapa _style_ yang berbeda 
+24. FutureBuilder: Widget yang melakukan _build_ dengan diri sendiri berdasarkan _snapshot_ terakhir dari interaksi dengan sebuah Future
+25. ListView: List dari widget-widget yang dapat di-_scroll_ secara linear. ListView menampilkan _children_-nya satu per satu mengikuti arah scroll
+26. Wrap: Widget yang menampilkan _children_-nya dalam beberapa _runs_ horizontal/vertikal 
+
+### Jelaskan mekanisme pengambilan data dari json hingga dapat ditampilkan pada Flutter.
+
+Data JSON yang sudah di-retrieve (dalam tugas ini dari https://tugas2jingga.herokuapp.com/mywatchlist/json/) di-decode menggunakan `jsonDecode()` dan dikonversi menjadi bentuk objek `MyWatchlist` dengan `fromJson()` lalu dimasukkan ke list. Di section `body`, `FutureBuilder` akan memanggil `fetchMyWatchlist()` yang akan mengembalikan data yang sudah dikonversi dan fungsi builder dijalankan akan menampilkan data pada Flutter. 
+
+### Implementasi
+- Buat folder `page` dan `model`, refactor semua file di lib kecuali `main.dart` ke direktori `page`. Buat file dart baru untuk menampung model watchlist di dalam direktori `model`. 
+- Salin data JSON dari link heroku Tugas 3 dan tempel ke web Quicktype untuk di-parse. Salin hasil parsing dari Quicktype dan tempel di file baru yang sudat dibuat yaitu `/counter_7/model/my-watchlist.dart`
+- lakukan steps menambahkan dependensi http seperti di tutorial 8 (`flutter pub add html`) tambahkan `<uses-permission android:name="android.permission.INTERNET" />` di `android/app/src/main/AndroidManifest.xml`
+- Buat file baru pada folder lib/page -> `/counter_7/page/mywatchlist.dart`, lakukan import-import yang dibutuhkan, buat stateful widget dengan nama class `MyWatchlistPage` dan lakukan pengambilan data dari URL menggunakan `http.get()`
+<details>
+  <summary>Lihat kode</summary>
+  
+```dart
+class MyWatchlistPage extends StatefulWidget {
+  const MyWatchlistPage({Key? key}) : super(key: key);
+
+  @override
+  _MyWatchlistPageState createState() => _MyWatchlistPageState();
+}
+
+class _MyWatchlistPageState extends State<MyWatchlistPage> {
+  Future<List<MyWatchlist>> fetchMyWatchlist() async {
+    var url = Uri.parse('https://tugas2jingga.herokuapp.com/mywatchlist/json/');
+    var response = await http.get(
+      url,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+      },
+    );
+
+    // melakukan decode response menjadi bentuk json
+    var data = jsonDecode(utf8.decode(response.bodyBytes));
+
+    // melakukan konversi data json menjadi object MyWatchlist
+    List<MyWatchlist> listMyWatchlist = [];
+    for (var d in data) {
+      if (d != null) {
+        listMyWatchlist.add(MyWatchlist.fromJson(d["fields"]));
+      }
+    }
+
+    return listMyWatchlist;
+  }
+```
+
+</details>
+
+- Tambahkan tombol navigasi pada drawer/hamburger untuk ke halaman mywatchlist
+<details>
+  <summary>Lihat kode</summary>
+  
+``` dart
+ListTile(
+                title: const Text('My Watch List'),
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const MyWatchlistPage()),
+                  );
+                },
+              ),
+```
+
+</details>
+
+- Tambahkan kode untuk memanggil JSON data dan menampilkannya pada section `body` di `Widget(BuildContext context)` (di bawah `Drawer`). Tambahkan juga kode untuk membuat tiap card dapat bernavigasi ke page `/counter_7/page/movie_details.dart/`
+<details>
+  <summary>Lihat kode</summary>
+  
+```dart
+body: FutureBuilder(
+            future: fetchMyWatchlist(),
+            builder: (context, AsyncSnapshot snapshot) {
+              if (snapshot.data == null) {
+                return const Center(child: CircularProgressIndicator());
+              } else {
+                if (!snapshot.hasData) {
+                  return Column(
+                    children: const [
+                      Text(
+                        "Tidak ada watchlist list :(",
+                        style:
+                            TextStyle(color: Color(0xff59A5D8), fontSize: 20),
+                      ),
+                      SizedBox(height: 8),
+                    ],
+                  );
+                } else {
+                  return ListView.builder(
+                      itemCount: snapshot.data!.length,
+                      itemBuilder: (_, index) => Container(
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            padding: const EdgeInsets.all(20.0),
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(15.0),
+                                boxShadow: const [
+                                  BoxShadow(
+                                      color: Colors.black, blurRadius: 2.0)
+                                ]),
+                            child: ListTile(
+                                title: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "${snapshot.data![index].title}",
+                                      style: const TextStyle(
+                                        fontSize: 18.0,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                onTap: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => MyDetailsPage(
+                                              rating:
+                                                  snapshot.data![index].rating,
+                                              releaseDate: snapshot
+                                                  .data![index].releaseDate,
+                                              review:
+                                                  snapshot.data![index].review,
+                                              title:
+                                                  snapshot.data![index].title,
+                                              watched: snapshot
+                                                  .data![index].watched)));
+                                }),
+                          ));
+                }
+              }
+            }));
+  }
+}
+```
+
+</details>
+
+-  Menambahkan halaman detail yaitu `/counter_7/page/movie_details.dart/` untuk setiap mywatchlist yang ada pada daftar tersebut. Halaman ini menampilkan judul, release date, rating, review, dan status (sudah ditonton/belum).
+
+<details>
+<summary> Lihat kode </summary>
+
+```dart
+class MyDetailsPage extends StatefulWidget {
+  const MyDetailsPage ({Key? key,
+      required this.watched,
+        required this.title,
+        required this.rating,
+        required this.releaseDate,
+        required this.review,
+  }) : super(key: key);
+
+  final watched;
+  final title;
+  final rating;
+  final releaseDate;
+  final review;
+
+  @override
+  State<MyDetailsPage> createState() => _MyDetailsPageState();
+}
+```
+
+```dart
+        body: Column(
+        children:[
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('${widget.title}',
+                style: const TextStyle(fontSize:23, fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(6.0, 0, 6.0, 6.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    style: const TextStyle(
+                      fontSize: 18.0,
+                      color: Colors.black,
+                    ),
+                    children: <TextSpan> [
+                      const TextSpan(text: 'Release Date: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                      TextSpan(text:'${widget.releaseDate}')
+                    ]
+                  )
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(6.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                RichText(
+                    text: TextSpan(
+                        style: const TextStyle(
+                          fontSize: 18.0,
+                          color: Colors.black,
+                        ),
+                        children: <TextSpan> [
+                          const TextSpan(text: 'Rating: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                          TextSpan(text:'${widget.rating}'),
+                          const TextSpan(text:'/5')
+                        ]
+                    )
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(6.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                RichText(
+                    text: TextSpan(
+                        style: const TextStyle(
+                          fontSize: 18.0,
+                          color: Colors.black,
+                        ),
+                        children: <TextSpan> [
+                          const TextSpan(text: 'Status: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                          widget.watched ? TextSpan(text:'watched') : TextSpan(text:'not watched'),
+                        ]
+                    )
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(6.0),
+            child: Wrap(
+              children: [
+                RichText(
+                    text: TextSpan(
+                        style: const TextStyle(
+                          fontSize: 18.0,
+                          color: Colors.black,
+                        ),
+                        children: <TextSpan> [
+                          const TextSpan(text: 'Review:\n', style: TextStyle(fontWeight: FontWeight.bold)),
+                          TextSpan(text:'${widget.review}')
+                        ]
+                    )
+                ),
+              ],
+            ),
+          ),
+        ]
+      ),
+```
+
+</details>
+
+-  Menambahkan tombol untuk kembali ke daftar mywatchlist
+<details>
+<summary>Lihat kode</summary>
+
+```dart
+floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.fromLTRB(6.0, 6.0, 6.0, 0.0),
+          child: TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.blue,
+              minimumSize: const Size.fromHeight(40),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                "Back",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ),
+        ),
+```
+
+</details> 
+
 ## Tugas 8
+<details>
+  <summary>Jawaban Soal</summary>
 
 ### Perbedaan `Navigator.push()` dan `Navigator.pushReplacement()`?
 `Navigator.push()`adalah method yang digunakan untuk menambahkan _route_
@@ -283,8 +610,9 @@ Membuat file `data.dart`, melakukan import halaman lain, menggunakan struktur se
         ],)
         ),
   ```
+</details>
 
-# Tugas 7 PBP
+## Tugas 7 PBP
 <details>
   <summary>Jawaban Soal</summary>
   
